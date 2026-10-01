@@ -1,4 +1,5 @@
 # Micro-VLA-Spatial-Reasoner
+🚀 **Live Demo:** https://micro-vla-spatial-reasoner-ferekcgzphv5tj7q9aaehz.streamlit.app/
 
 A small PyTorch CNN that detects the **position and colour of squares** in synthetic 32×32 RGB images.
 
