@@ -1,127 +1,683 @@
 # Micro-VLA-Spatial-Reasoner
+
 🚀 **Live Demo:** https://micro-vla-spatial-reasoner-ferekcgzphv5tj7q9aaehz.streamlit.app/
 
-A small PyTorch CNN that detects the **position and colour of squares** in synthetic 32×32 RGB images.
+A small PyTorch CNN that learns to locate coloured squares in synthetic **32×32 RGB images**.
 
-## 🧠 What this project does
+The project is designed as a beginner-friendly introduction to **Computer Vision, CNNs, PyTorch, image tensors, regression, model training, and deployment with Streamlit**.
 
-This project generates simple synthetic images containing coloured squares and trains a convolutional neural network (CNN) to answer two questions:
+---
 
-1. **Where is the square?** → predicts its `(x, y)` position
-2. **What colour is it?** → predicts red, green, or blue
+## 🧠 What This Project Does
 
-The model is trained entirely on generated data, so no external dataset is required.
+This project creates simple synthetic images containing coloured squares and trains a small convolutional neural network to predict **where a selected object is located**.
 
-The project was built as a hands-on introduction to computer vision and deep learning using PyTorch.
+The workflow is:
 
-## 🏗️ Project Structure
+```text
+Synthetic World
+      ↓
+Generate RGB Image
+      ↓
+Create Target Coordinates
+      ↓
+Train CNN
+      ↓
+Save Model
+      ↓
+Load Model
+      ↓
+Select Object Colour
+      ↓
+Predict Object Position
+      ↓
+Visualize Prediction
+```
+
+The current application allows the user to select:
+
+- 🔴 Red
+- 🟢 Green
+- 🔵 Blue
+
+The CNN then predicts the position of the selected object.
+
+---
+
+## 🚀 Live Demo
+
+Try the deployed application:
+
+👉 https://micro-vla-spatial-reasoner-ferekcgzphv5tj7q9aaehz.streamlit.app/
+
+The demo allows you to:
+
+1. Generate a synthetic world.
+2. Select an object colour.
+3. Ask the CNN to locate the selected object.
+4. Compare the actual position with the CNN prediction.
+5. View the prediction directly on the image.
+
+Example:
+
+```text
+Actual Centre:   (5.5, 20.5)
+CNN Prediction:  (5.3, 20.3)
+Pixel Error:     0.30 px
+```
+
+---
+
+# 📁 Project Structure
 
 ```text
 Micro-VLA-Spatial-Reasoner/
-├── world.py          # Generates synthetic images
-├── dataset.py        # PyTorch dataset
-├── model.py          # CNN architecture
-├── train.py          # Model training
-├── predict.py        # Interactive prediction
-├── requirements.txt  # Python dependencies
-└── .gitignore        # Files ignored by Git
+│
+├── app.py
+├── dataset.py
+├── model.py
+├── predict.py
+├── train.py
+├── world.py
+│
+├── microcnn.pth
+├── requirements.txt
+├── README.md
+├── LICENSE
+└── .gitignore
 ```
 
-## 🔬 How it works
+### File Overview
 
-The overall pipeline is:
+| File | Purpose |
+|---|---|
+| `world.py` | Generates synthetic RGB worlds containing coloured squares |
+| `dataset.py` | Creates PyTorch training examples |
+| `model.py` | Defines the CNN architecture |
+| `train.py` | Trains the CNN |
+| `predict.py` | Runs predictions interactively |
+| `app.py` | Streamlit web application |
+| `microcnn.pth` | Saved trained model weights |
+| `requirements.txt` | Python dependencies |
+| `README.md` | Project documentation |
+| `LICENSE` | MIT License |
+| `.gitignore` | Files ignored by Git |
+
+---
+
+# 🔍 How It Works
+
+The project is based on a simple idea:
+
+> Give a CNN an image containing a coloured square and teach it to predict the square's centre position.
+
+Each synthetic image is only:
 
 ```text
-Synthetic image
-      ↓
-CNN convolution layer
-      ↓
-Feature extraction
-      ↓
-Flatten
-      ↓
-Fully connected layers
-      ↓
-    128 features
-      ↓
- ┌───────────────┐
- ↓               ↓
-Position head   Colour head
- ↓               ↓
-(x, y)         Red/Green/Blue
+32 × 32 pixels
 ```
 
-The CNN receives a **32×32 RGB image** represented as a PyTorch tensor with shape:
+and contains:
+
+```text
+3 colour channels
+```
+
+which means the image tensor has the shape:
 
 ```text
 [3, 32, 32]
 ```
 
-The `3` represents the RGB colour channels.
-
-The convolution layer learns multiple feature detectors that respond to useful visual patterns in the image.
-
-The extracted features are then flattened and passed through fully connected layers.
-
-Finally, the network produces two outputs:
-
-- A position prediction
-- A colour prediction
-
-## 📍 Position Prediction
-
-The position task is treated as a **regression problem**.
-
-The model predicts normalized `(x, y)` coordinates.
-
-The target coordinates are normalized between `0` and `1` so that the neural network can learn the position more easily.
-
-The prediction can then be converted back into pixel coordinates.
-
-## 🎨 Colour Prediction
-
-The colour task is treated as a **classification problem**.
-
-The model learns to distinguish between:
+The three channels represent:
 
 ```text
-0 → Red
-1 → Green
-2 → Blue
+Channel 0 → Red
+Channel 1 → Green
+Channel 2 → Blue
 ```
 
-The user can select which colour to find, and the program displays the model's predicted position for that colour.
+During training, the target position is represented using normalized coordinates.
 
-## 🧪 Synthetic Data
+For a 32×32 image:
 
-Instead of downloading a large computer-vision dataset, this project generates its own training data.
+```text
+x_normalized = x / 31
+y_normalized = y / 31
+```
 
-Each image contains coloured squares placed at different positions.
+The model learns to output values between approximately:
 
-This makes it possible to experiment with:
+```text
+0 → left / top
+1 → right / bottom
+```
 
-- Image tensors
-- RGB channels
-- CNNs
-- Training
-- Regression
-- Classification
-- Loss functions
-- Backpropagation
+The predicted normalized coordinates are converted back into pixel coordinates for visualization.
 
-without needing an external dataset.
+---
 
-## 🚀 Running the Project
+# 🌍 Synthetic World
 
-### 1. Install dependencies
+Instead of using a real-world dataset, this project generates its own images.
 
-Create and activate a Python virtual environment, then install the required packages:
+A typical world contains coloured squares such as:
+
+```text
+🔴 Red square
+🟢 Green square
+🔵 Blue square
+```
+
+The squares are placed at random positions.
+
+For example:
+
+```text
+32 × 32 Image
+
+┌──────────────────────────────┐
+│                              │
+│       🔵                     │
+│                              │
+│                    🟢        │
+│                              │
+│   🔴                         │
+│                              │
+└──────────────────────────────┘
+```
+
+Because the positions are generated automatically, thousands of training examples can be created without manually labelling images.
+
+---
+
+# 🧪 Dataset Generation
+
+The dataset creates examples containing:
+
+```text
+Image
++
+Target Position
+```
+
+A simplified example is:
+
+```python
+image = torch.zeros(3, 32, 32)
+
+x = random_x
+y = random_y
+
+image[colour, y:y+4, x:x+4] = 1.0
+
+center_x = x + 1.5
+center_y = y + 1.5
+```
+
+The square is 4×4 pixels, so its centre is calculated from its starting position.
+
+The target is then normalized before being given to the neural network.
+
+---
+
+# 🧠 CNN Architecture
+
+The project uses a small convolutional neural network called:
+
+```text
+MicroCNN
+```
+
+The basic architecture contains:
+
+```text
+Input Image
+[3 × 32 × 32]
+      ↓
+Conv2D
+3 → 8 channels
+      ↓
+ReLU
+      ↓
+Flatten
+      ↓
+Fully Connected Layer
+8192 → 128
+      ↓
+Position Prediction
+```
+
+The convolution layer acts like a collection of small visual detectors.
+
+Each detector can learn to respond to patterns in the image.
+
+For example, some filters may become useful for detecting:
+
+```text
+edges
+corners
+bright regions
+square-like patterns
+colour patterns
+```
+
+---
+
+# 👀 Understanding the Tensor Shapes
+
+The input image has:
+
+```text
+[3, 32, 32]
+```
+
+After batching with a PyTorch `DataLoader`, the shape becomes:
+
+```text
+[batch_size, 3, 32, 32]
+```
+
+For example:
+
+```text
+[32, 3, 32, 32]
+```
+
+means:
+
+```text
+32 images
+3 colour channels
+32 pixel height
+32 pixel width
+```
+
+After the convolution layer:
+
+```text
+[32, 8, 32, 32]
+```
+
+The CNN now has:
+
+```text
+8 learned feature maps
+```
+
+These are flattened before being passed to the fully connected layers.
+
+---
+
+# 🎯 Position Prediction
+
+The main task is **regression**.
+
+Instead of predicting a class such as:
+
+```text
+cat
+dog
+car
+```
+
+the network predicts numerical coordinates:
+
+```text
+x
+y
+```
+
+For example:
+
+```text
+Prediction:
+[0.177, 0.655]
+```
+
+These normalized values can be converted back into pixel coordinates:
+
+```text
+x_pixel = x_normalized × 31
+y_pixel = y_normalized × 31
+```
+
+For example:
+
+```text
+Actual Centre:
+(5.5, 20.5)
+
+CNN Prediction:
+(5.3, 20.3)
+```
+
+The difference between these values can be used to calculate the prediction error in pixels.
+
+---
+
+# 🎨 Selecting an Object
+
+The Streamlit application allows the user to choose the object colour:
+
+```text
+🔴 Red
+🟢 Green
+🔵 Blue
+```
+
+After selecting a colour, the application runs the trained model and displays the predicted position.
+
+The selected colour determines which object position is being evaluated in the generated world.
+
+The current application focuses on **spatial localization** rather than using a separate colour-classification output head.
+
+---
+
+# 🏋️ Training
+
+The model is trained using:
+
+```text
+PyTorch
++
+DataLoader
++
+Mean Squared Error
++
+Adam Optimizer
+```
+
+The basic training loop follows:
+
+```python
+optimizer.zero_grad()
+
+prediction = model(images)
+
+loss = criterion(prediction, targets)
+
+loss.backward()
+
+optimizer.step()
+```
+
+### What happens here?
+
+### 1. Forward Pass
+
+The image is passed through the CNN.
+
+```text
+Image
+ ↓
+CNN
+ ↓
+Prediction
+```
+
+### 2. Calculate Loss
+
+The prediction is compared with the correct target.
+
+```text
+Prediction
+    ↓
+Compare
+    ↓
+Actual Target
+    ↓
+Loss
+```
+
+### 3. Backpropagation
+
+The loss is used to calculate how the model's parameters should change.
+
+```python
+loss.backward()
+```
+
+### 4. Optimizer Step
+
+The Adam optimizer updates the model parameters.
+
+```python
+optimizer.step()
+```
+
+The goal is to gradually reduce the loss.
+
+---
+
+# 📉 Understanding Loss
+
+The project uses **Mean Squared Error (MSE)** for the position prediction.
+
+A simplified idea is:
+
+```text
+Loss = average(prediction - target)²
+```
+
+A smaller loss generally means the predicted coordinates are closer to the target coordinates.
+
+For example:
+
+```text
+3.6e-05
+```
+
+means:
+
+```text
+0.000036
+```
+
+Scientific notation is commonly used because neural-network losses can become very small.
+
+---
+
+# ⚙️ Optimizer
+
+The optimizer is responsible for updating the neural network's learnable parameters.
+
+This project uses:
+
+```text
+Adam
+```
+
+Think of the model parameters as thousands of small adjustable knobs.
+
+Training repeatedly adjusts those knobs so that:
+
+```text
+Prediction → closer to Target
+```
+
+and therefore:
+
+```text
+Loss → smaller
+```
+
+---
+
+# 💾 Saving the Model
+
+After training, the learned parameters are saved using:
+
+```python
+torch.save(model.state_dict(), "microcnn.pth")
+```
+
+The file:
+
+```text
+microcnn.pth
+```
+
+contains the trained model weights.
+
+The model architecture is defined in:
+
+```text
+model.py
+```
+
+while the learned parameters are stored in:
+
+```text
+microcnn.pth
+```
+
+---
+
+# 📥 Loading the Model
+
+The saved model can later be loaded without training again.
+
+```python
+model.load_state_dict(
+    torch.load("microcnn.pth")
+)
+```
+
+This allows the trained model to be used for prediction and deployment.
+
+---
+
+# 🔮 Prediction
+
+The prediction script loads the trained model and evaluates a generated image.
+
+The model is placed into evaluation mode:
+
+```python
+model.eval()
+```
+
+A single image is given a batch dimension using:
+
+```python
+image.unsqueeze(0)
+```
+
+So:
+
+```text
+[3, 32, 32]
+```
+
+becomes:
+
+```text
+[1, 3, 32, 32]
+```
+
+The model then produces the predicted coordinates.
+
+---
+
+# 🎨 Visualization
+
+The project uses Matplotlib to visualize the generated world.
+
+The image tensor is converted from PyTorch's format:
+
+```text
+[C, H, W]
+```
+
+to Matplotlib's expected format:
+
+```text
+[H, W, C]
+```
+
+using:
+
+```python
+image.permute(1, 2, 0)
+```
+
+The application then displays:
+
+```text
+Actual Position
+       ↓
+      ●
+
+CNN Prediction
+       ↓
+      ●
+```
+
+and connects them visually so the prediction error can be seen directly.
+
+---
+
+# 🌐 Streamlit Application
+
+The project includes a web interface built with:
+
+```text
+Streamlit
+```
+
+The application provides:
+
+- Object colour selection
+- Synthetic world generation
+- CNN prediction
+- Actual centre coordinates
+- CNN predicted coordinates
+- Pixel error
+- Visual prediction overlay
+
+The interface is designed to make the CNN's behaviour easy to understand visually.
+
+---
+
+# ▶️ Running Locally
+
+Clone the repository:
+
+```bash
+git clone https://github.com/bh-arti113/Micro-VLA-Spatial-Reasoner.git
+cd Micro-VLA-Spatial-Reasoner
+```
+
+Create a virtual environment:
+
+```bash
+python -m venv myenv
+```
+
+Activate it.
+
+### Windows
+
+```bash
+myenv\Scripts\activate
+```
+
+### macOS / Linux
+
+```bash
+source myenv/bin/activate
+```
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Train the model
+---
+
+# 🏋️ Train the Model
 
 Run:
 
@@ -129,158 +685,266 @@ Run:
 python train.py
 ```
 
-The training script generates synthetic training examples and trains the CNN.
+This generates training data, trains the CNN, and saves the learned parameters.
 
-The learned model weights are saved as:
+The trained model is saved as:
 
 ```text
 microcnn.pth
 ```
 
-This file is intentionally excluded from the GitHub repository using `.gitignore`.
+---
 
-### 3. Run predictions
+# 🔮 Run Prediction
 
-After training, run:
+Run:
 
 ```bash
 python predict.py
 ```
 
-The program generates a synthetic image and allows the user to select a colour to find.
+The script loads the trained model and allows interactive prediction.
 
-The model then predicts the approximate position of that colour.
+---
 
-## 🛠️ Technologies
+# 🌐 Run the Streamlit App
 
-- **Python**
-- **PyTorch**
-- **Convolutional Neural Networks (CNNs)**
-- **Matplotlib**
-- **Synthetic data generation**
+Run:
 
-## 📚 Learning Goals
+```bash
+streamlit run app.py
+```
 
-This project was built to understand the fundamentals of:
+Streamlit will start a local web server and provide a URL where the application can be opened in a browser.
 
-- Image tensors
-- RGB colour channels
-- Convolution layers
-- Feature extraction
-- ReLU activation
-- Flattening tensors
-- Fully connected layers
-- Regression vs classification
-- Loss functions
+---
+
+# 🛠️ Technologies Used
+
+- 🐍 Python
+- 🔥 PyTorch
+- 🧠 Convolutional Neural Networks
+- 📊 NumPy / Tensor operations
+- 📈 Matplotlib
+- 🌐 Streamlit
+- 🗂️ GitHub
+
+---
+
+# 📚 Learning Goals
+
+This project was built to understand the fundamentals of neural networks through a small and visual problem.
+
+The main concepts explored are:
+
+### PyTorch
+
+- Tensors
+- `Dataset`
+- `DataLoader`
+- Neural network modules
+- Forward pass
 - Backpropagation
 - Optimizers
-- Model training
-- Model inference
-- Saving and loading PyTorch models
+- Model saving and loading
 
-## 🧠 Key Concepts Learned
+### Computer Vision
 
-### Image tensor
+- RGB images
+- Image tensors
+- Convolution
+- Feature maps
+- Spatial localization
+- Coordinate prediction
 
-A single RGB image is represented as:
+### Machine Learning
+
+- Training data
+- Targets
+- Loss functions
+- Regression
+- Optimization
+- Model evaluation
+
+### Deployment
+
+- Streamlit applications
+- GitHub repositories
+- Streamlit Community Cloud
+- Loading trained model weights in a deployed application
+
+---
+
+# 🧩 Key Concepts Learned
+
+## 1. Images Are Tensors
+
+A colour image can be represented as:
+
+```text
+[Channels, Height, Width]
+```
+
+For this project:
 
 ```text
 [3, 32, 32]
 ```
 
-where:
+---
+
+## 2. CNNs Learn Visual Features
+
+Convolutional layers allow the network to learn useful patterns from images.
+
+Instead of manually programming:
 
 ```text
-3  → RGB channels
-32 → image height
-32 → image width
+"look for a square here"
 ```
 
-### CNN feature extraction
+the CNN learns useful features from training examples.
 
-The convolution layer learns visual patterns from the image.
+---
 
-For example, different learned filters can become sensitive to patterns such as edges, colours, or square-like structures.
+## 3. Regression Predicts Numbers
 
-### Loss
-
-The loss measures how different the model's prediction is from the correct target.
-
-During training, the goal is to reduce the loss.
-
-### Backpropagation
-
-Backpropagation calculates how the model's parameters contributed to the error.
-
-The optimizer then uses this information to update those parameters.
-
-### Inference
-
-After training, the model can be used to make predictions on new synthetic images.
-
-## 📊 Example Result
-
-The trained model successfully learned to identify coloured squares and predict their approximate spatial positions.
-
-For example, a prediction may look conceptually like:
+The network predicts coordinates rather than a simple class label.
 
 ```text
-Requested colour: Blue
-
-Actual position:     (15.5, 21.5)
-Predicted position:  (15.4, 21.2)
+(x, y)
 ```
 
-The exact values vary because the images are generated randomly.
+This makes the project a small example of **visual localization**.
 
-## 📁 Repository Files
+---
 
-| File | Purpose |
-|------|---------|
-| `world.py` | Generates synthetic images |
-| `dataset.py` | Creates the PyTorch dataset |
-| `model.py` | Defines the CNN |
-| `train.py` | Trains the model |
-| `predict.py` | Runs interactive predictions |
-| `requirements.txt` | Lists required Python packages |
-| `.gitignore` | Prevents unnecessary files from being uploaded |
+## 4. Training Changes Model Parameters
 
-## 🎯 Project Status
-
-**Completed — beginner computer vision / CNN project**
-
-The project successfully demonstrates an end-to-end machine-learning workflow:
+The optimizer repeatedly updates the model's parameters based on the loss.
 
 ```text
-Generate data
-     ↓
-Create dataset
-     ↓
-Build CNN
-     ↓
-Train model
-     ↓
-Save model
-     ↓
-Load model
-     ↓
-Make predictions
-     ↓
-Visualize results
+Input
+ ↓
+Prediction
+ ↓
+Loss
+ ↓
+Backpropagation
+ ↓
+Parameter Update
+ ↓
+Better Prediction
 ```
 
-## 🔮 Possible Future Improvements
+---
 
-Some possible next steps for the project are:
+## 5. Normalization Helps Neural Networks
 
-- Add object-size prediction
-- Improve the visualization
-- Add validation and test datasets
-- Track training loss with plots
-- Add a confusion matrix for colour classification
-- Experiment with deeper CNN architectures
-- Train on real images instead of only synthetic data
+Coordinates are normalized from pixel values into approximately:
 
-## 👨‍💻 About
+```text
+0 → 1
+```
 
-This project was created as a hands-on learning project to understand how a CNN can learn visual information and make spatial predictions using PyTorch.
+This gives the network a consistent numerical range for the target values.
+
+---
+
+# 📊 Example Result
+
+One example prediction from the application:
+
+```text
+Actual Centre:   (5.5, 20.5)
+
+CNN Prediction:  (5.3, 20.3)
+
+Pixel Error:     0.30 px
+```
+
+This shows that the CNN can learn the spatial relationship between the image and the object's position on this synthetic task.
+
+---
+
+# 🚧 Project Status
+
+### ✅ Completed
+
+- Synthetic RGB world generation
+- Random object placement
+- PyTorch dataset creation
+- CNN architecture
+- Position regression
+- Model training
+- Model saving
+- Model loading
+- Interactive prediction
+- Matplotlib visualization
+- Streamlit interface
+- GitHub repository
+- Streamlit Community Cloud deployment
+
+### 🔜 Possible Future Improvements
+
+- Add a dedicated colour-classification head
+- Train on more complex scenes
+- Add multiple objects of the same colour
+- Use larger and more varied images
+- Add data augmentation
+- Improve CNN architecture
+- Add confidence estimates
+- Experiment with larger datasets
+- Extend the project toward more general visual reasoning
+
+---
+
+# 💡 Why This Project?
+
+The goal was not to build a huge production-scale computer vision system.
+
+The goal was to understand the complete machine-learning pipeline:
+
+```text
+Generate Data
+      ↓
+Prepare Dataset
+      ↓
+Build Neural Network
+      ↓
+Train Model
+      ↓
+Measure Loss
+      ↓
+Save Weights
+      ↓
+Load Model
+      ↓
+Make Predictions
+      ↓
+Visualize Results
+      ↓
+Deploy Application
+```
+
+Building this small project makes each stage of the pipeline easier to inspect and understand.
+
+---
+
+# 👨‍💻 About
+
+This project was created as a hands-on learning project for understanding **PyTorch, CNNs, computer vision, spatial localization, and model deployment**.
+
+The emphasis is on learning by building a complete working system from synthetic data to a live web application.
+
+---
+
+# 📜 License
+
+This project is licensed under the **MIT License**.
+
+See the [`LICENSE`](LICENSE) file for the full license text.
+
+---
+
+⭐ If you find this project useful for learning, feel free to explore the code and experiment with the model.
